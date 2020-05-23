@@ -2,7 +2,7 @@
 Brings you stuff and can find its way to you. Example with the VHDPlus Motor &amp; Level Shifter Extension and NIOSDuino
 
 # Compile
-1.1. Clone Repository
+1.1. Clone Repository<br>
 1.2. Open the Robot.vhdpproj file with the VHDPlus IDE
 1.3. Open Libraries/NIOSDuino/NIOSDuino_Core.qsys
 1.4. Click on onchip_flash_0 and disable non-default initialization file
