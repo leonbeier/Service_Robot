@@ -1,0 +1,149 @@
+Main
+(
+    Encoder_L           : IN STD_LOGIC;
+    Encoder_R           : IN STD_LOGIC;
+    Motor_LF            : OUT STD_LOGIC;
+    Motor_LB            : OUT STD_LOGIC;
+    Motor_RF            : OUT STD_LOGIC;
+    Motor_RB            : OUT STD_LOGIC;
+    
+    Trigger             : OUT STD_LOGIC;
+    Echo                : IN STD_LOGIC_VECTOR(4 downto 0);
+    
+    sdram_addr          : OUT std_logic_vector (11 downto 0);
+    sdram_ba            : OUT std_logic_vector (1 downto 0);
+    sdram_cas_n         : OUT std_logic;
+    sdram_dq            : INOUT std_logic_vector (15 downto 0);
+    sdram_dqm           : OUT std_logic_vector (1 downto 0);
+    sdram_ras_n         : OUT std_logic;
+    sdram_we_n          : OUT std_logic;
+    sdram_clk_clk       : OUT std_logic;
+    spi_flash_MISO      : IN  std_logic := '0';
+    spi_flash_MOSI      : out std_logic;
+    spi_flash_SCLK      : out std_logic;
+    spi_flash_SS_n      : out std_logic;
+    uart_rxd            : IN std_logic;
+    uart_txd            : OUT std_logic; 
+    
+    LED                 : OUT STD_LOGIC;
+    BTN                 : IN STD_LOGIC;
+    
+)
+{
+    LED <= NIOSDuino_Core_po_export(30);
+    spi_flash_SS_n <= NIOSDuino_Core_po_export(31);
+    NIOSDuino_Core_pi_export(26) <= BTN;
+
+    SIGNAL NIOSDuino_Core_po_export     : std_logic_vector (31 downto 0);
+    SIGNAL NIOSDuino_Core_pi_export     : std_logic_vector (31 downto 0);
+    NewComponent NIOSDuino_Core
+    (
+        clk_in_clk    => CLK,
+        po_export     => NIOSDuino_Core_po_export,
+        pi_export     => NIOSDuino_Core_pi_export,
+        sdram_addr    => sdram_addr,
+        sdram_ba      => sdram_ba,
+        sdram_cas_n   => sdram_cas_n,
+        sdram_dq      => sdram_dq,
+        sdram_dqm     => sdram_dqm,
+        sdram_ras_n   => sdram_ras_n,
+        sdram_we_n    => sdram_we_n,
+        sdram_clk_clk => sdram_clk_clk,
+        spi_flash_MISO => spi_flash_MISO,
+        spi_flash_MOSI => spi_flash_MOSI,
+        spi_flash_SCLK => spi_flash_SCLK,
+        uart_rxd      => uart_rxd,
+        uart_txd      => uart_txd,
+    );
+    
+    Motor_Controller_RST_Drive <= NIOSDuino_Core_po_export(0);
+
+    Motor_Controller_Drive_L <= TO_INTEGER(SIGNED(NIOSDuino_Core_po_export(17 downto 3))) when NIOSDuino_Core_po_export(1) = '1' else Motor_Controller_Drive_L;
+    Motor_Controller_Drive_R <= TO_INTEGER(SIGNED(NIOSDuino_Core_po_export(17 downto 3))) when NIOSDuino_Core_po_export(2) = '1' else Motor_Controller_Drive_R;
+    
+    Motor_Controller_Drive_Speed <= TO_INTEGER(UNSIGNED(NIOSDuino_Core_po_export(25 downto 18)));
+    
+    NIOSDuino_Core_pi_export(0) <= Motor_Controller_Finished;
+    NIOSDuino_Core_pi_export(1) <= Motor_Controller_Error;
+    
+    NIOSDuino_Core_pi_export(15 downto 2) <= STD_LOGIC_VECTOR(TO_UNSIGNED(Motor_Controller_Driven_L, 14)) when NIOSDuino_Core_po_export(26) = '0'
+    else STD_LOGIC_VECTOR(TO_UNSIGNED(Motor_Controller_Driven_R, 14));
+    
+    NIOSDuino_Core_pi_export(25 downto 16) <= STD_LOGIC_VECTOR(TO_UNSIGNED(Ultrasonic_Controller_Dist(TO_INTEGER(UNSIGNED(NIOSDuino_Core_po_export(29 downto 27)))), 10));
+
+    SIGNAL Motor_Controller_RST_Drive           : STD_LOGIC;                            --out 0    : Start
+    SIGNAL Motor_Controller_Drive_L             : INTEGER   range (-1)*10000 to 10000;  --out 1    : L/R select
+    SIGNAL Motor_Controller_Drive_R             : INTEGER   range (-1)*10000 to 10000;  --out 2-16 : 15bit route
+    SIGNAL Motor_Controller_Drive_Speed         : NATURAL   range 0 to (2**8)-1;        --out 17-24: 8bit speed
+    SIGNAL Motor_Controller_Finished            : STD_LOGIC;                            --in  0    : Finished
+    SIGNAL Motor_Controller_Error               : STD_LOGIC;                            --in  1    : Error
+    SIGNAL Motor_Controller_Driven_L            : NATURAL   range 0 to 10000;           --out 25   : Driven L/R select
+    SIGNAL Motor_Controller_Driven_R            : NATURAL   range 0 to 10000;           --in  2-15 : Driven
+    
+    --out 26-28: Ultrasonic select
+    --in  16-25: Ultrasonic distance
+    
+    CONSTANT Motor_Holes_In_Disk          : NATURAL := 11;
+    CONSTANT Motor_Gear_Ratio             : NATURAL := 150;
+    CONSTANT Motor_Wheel_Circumference    : NATURAL := 251;
+    
+    NewComponent Motor_Controller
+    (
+        CLK_Frequency       => 12000000,
+        PWM_Frequency       => 20000,
+        Bits_Resolution     => 8,
+        Holes_In_Disk       => Motor_Holes_In_Disk,
+        Gear_Ratio          => Motor_Gear_Ratio,
+        Wheel_Circumference => Motor_Wheel_Circumference,
+        Debounce_Cycles     => 500,
+        Max_Length          => 10000,
+        Error_Delay         => 500,
+        Correction_Step     => 1,
+        Correction_Cycles   => 1,
+        Length_Corr_Step    => 25,
+        Max_Length_Diff     => 10,
+        Accel_Length        => 100,
+        Brake_Length        => 100,
+        Accel_Speed         => 200,
+        Brake_Speed         => 200,
+        Max_Turn_Time       => 1000,
+
+        Reset               => '0',
+        Encoder_L           => Encoder_L,
+        Encoder_R           => Encoder_R,
+        Motor_LF            => Motor_LF,
+        Motor_LB            => Motor_LB,
+        Motor_RF            => Motor_RF,
+        Motor_RB            => Motor_RB,
+        Enable              => '1',
+        RST_Drive           => Motor_Controller_RST_Drive,
+        Drive_L             => Motor_Controller_Drive_L,
+        Drive_R             => Motor_Controller_Drive_R,
+        Drive_Speed         => Motor_Controller_Drive_Speed,
+        Driven_L            => Motor_Controller_Driven_L,
+        Driven_R            => Motor_Controller_Driven_R,
+        Finished            => Motor_Controller_Finished,
+        Error               => Motor_Controller_Error,
+    );
+    
+    TYPE Ultrasonic_Controller_Dist_type IS ARRAY (0 to 4) OF NATURAL range 0 to 1000;
+    SIGNAL Ultrasonic_Controller_Dist : Ultrasonic_Controller_Dist_type;
+    
+    SIGNAL Trigger_V : STD_LOGIC_VECTOR (4 downto 0);
+    Trigger <= Trigger_V(0);
+
+    Generate (for i in 0 to 4)
+    {
+        NewComponent Ultrasonic_Controller
+        (
+            CLK_Frequency    => 12000000,
+            Update_Frequency => 15,
+            
+            Reset            => '0',
+            Trigger          => Trigger_V(i),
+            Echo             => Echo(i),
+            Dist             => Ultrasonic_Controller_Dist(i),
+        );
+    }
+
+}
