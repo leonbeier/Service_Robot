@@ -1,7 +1,6 @@
 
 #include <Arduino.h>
 #include <String.h>
-#include <EEPROM.h>
 #include <SPI.h>
 #include "SPIFlash.h"
 #include "IO_Communication.h"
@@ -13,8 +12,35 @@ void save();
 void read();
 void saveInteger(uint32_t addr, int data);
 int readInteger(uint32_t addr);
+void waitForEnable();
+
+int rightAngleTurnDistance = 475;  //mm to drive for a 90° turn
+int sideCheckMaxDistance = 10000;  //maximum distance to drive while checking if the object can be surrounded
+int sideCheckDistance_1  = 250;    //Overshoot while driving to the side
+int sideCheckDistance_2  = 450;    //Overshoot while driving forward
+int maxSideDistance  = 100;        //Distance from Ultrasonic sensor after that seen as clear
+int surroundObjectSpeed = 255;     //speed for surrounding
+int backDistance = 50;             //Distance to drive back after collision
+int minDist = 8;                   //distance in front of ultrasonic sensors for collision (in cm)
 
 SPIFlash flash(31);
+
+int routeNumber = 0;
+int routesL [16][64];
+int routesR [16][64];
+int lengths [16];
+
+char received [64];
+bool routeRunning = false;
+
+int route;
+
+int curRouteL [128];
+int curRouteR [128];
+int curRouteStep;
+bool recordRoute;
+
+bool routeStop = false;
 
 /*
  * 32 Bit Input + 32 Bit Output
@@ -45,27 +71,14 @@ void setup() {
 	else Serial.println("Init FAIL!");
 }
 
-int routeNumber = 0;
-int routesL [16][64];
-int routesR [16][64];
-int lengths [16];
-
-char received [64];
-bool routeRunning = false;
-
-int route;
-
-int curRouteL [128];
-int curRouteR [128];
-int curRouteStep;
-bool recordRoute;
-
 void loop() {
 	Serial.println("Ready\n\n\"Read\" = Read saved routes\n\"Record\" = Record new route\n\"Route\" = Drive route\n\"Home\" = Return to home\n\"Stop\" = Stop robot while driving\n\"Delete\" = Delete route\n\"Turn\" = Set length to turn 90deg\n1 = 10cm Forward, 2 = Left, 3 = 10cm Backward, 4 = Right");
 
 	//Receive UART Data
 
 	receive();
+
+	routeStop = false;
 
 	if(!strncmp(strtolower(received), "record", strlen("record"))){ //TODO: Mehrere gleiche Richtungen zu einer Strecke zusammenfassen
 		Serial.println("Ok = Finish route\n100,100 = 10cm forward\n-100,100 = Turn left\n-100,-100 = 10cm backward\n100,-100 = Turn right");
@@ -138,12 +151,7 @@ void loop() {
 		routeRunning = true;
 		for (int i = 0; i < lengths[route]; i ++){
 			if (!driveRoute(routesL[route][i],routesR[route][i],255)){
-				while(!digitalRead(26)){
-					digitalWrite(30,1);
-					delay(250);
-					digitalWrite(30,0);
-					delay(250);
-				}
+				waitForEnable();
 			}
 		}
 		routeRunning = false;
@@ -152,22 +160,15 @@ void loop() {
 	else if(!strncmp(strtolower(received), "home", strlen("home"))){ //Besser: beim Fahren aufnehmen um auch Umfahren zu tracken
 		routeRunning = true;
 		if (!driveTurn(true) || !driveTurn(true)) {
-			while(!digitalRead(26)){
-				digitalWrite(30,1);
-				delay(250);
-				digitalWrite(30,0);
-				delay(250);
-			}
+			waitForEnable();
 		}
 		for (int i = lengths[route]-1; i >= 0; i --){
 			if (!driveRoute(routesR[route][i],routesL[route][i],255)){
-				while(!digitalRead(26)){
-					digitalWrite(30,1);
-					delay(250);
-					digitalWrite(30,0);
-					delay(250);
-				}
+				waitForEnable();
 			}
+		}
+		if (!driveTurn(true) || !driveTurn(true)) {
+			waitForEnable();
 		}
 		routeRunning = false;
 	}
@@ -236,9 +237,28 @@ void loop() {
 	}
 }
 
+bool error = false;
+
+void waitForEnable(){
+	Serial.println("Wait for release");
+	error = true;
+	do {
+		receive();
+	} while (strncmp(strtolower(received), "release", strlen("release")) && !digitalRead(26));
+	error = false;
+	Serial.println("Re-enabled Robot!");
+}
+
 void receive(){
 	received[0] = '\0';
-	while (Serial.available() == 0);
+	while (Serial.available() == 0){
+		if (error){
+			digitalWrite(30,1);
+			delay(250);
+			digitalWrite(30,0);
+			delay(250);
+		}
+	}
 	char c;
 	while (Serial.available() > 0 && (c = Serial.read()) != '\n'){
 		sprintf(received,"%s%c",received,c);
@@ -256,11 +276,9 @@ void serialEvent() {
 
 		if (!strncmp(strtolower(received), "stop", strlen("stop"))){
 			startRoute(0,0,0, false);
-			Serial.println("Stopped Robot!\n\"Release\" = Re-enabled Robot");
-			do {
-				receive();
-			} while (strncmp(strtolower(received), "release", strlen("release")));
-			Serial.println("Re-enabled Robot!");
+			routeStop = true;
+			Serial.print("Stopped Robot!\n\"Release\" = Re-enabled Robot ");
+			Serial.println(routeStop);
 		}
 	}
 }

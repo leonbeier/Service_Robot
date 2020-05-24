@@ -2,13 +2,16 @@
 #include <String.h>
 #include "IO_Communication.h"
 
-static int rightAngleTurnDistance = 475;  //mm to drive for a 90° turn
-static int sideCheckMaxDistance = 10000;  //maximum distance to drive while checking if the object can be surrounded
-static int sideCheckDistance_1  = 250;    //Overshoot while driving to the side
-static int sideCheckDistance_2  = 450;    //Overshoot while driving to the side
-static int surroundObjectSpeed = 255;     //speed for surrounding
-static int backDistance = 50;
-static int minDist = 5;                   //distance in front of ultrasonic sensors for collision (in cm)
+extern int rightAngleTurnDistance;  //mm to drive for a 90° turn
+extern int sideCheckMaxDistance;    //maximum distance to drive while checking if the object can be surrounded
+extern int sideCheckDistance_1;     //Overshoot while driving to the side
+extern int sideCheckDistance_2;     //Overshoot while driving forward
+extern int maxSideDistance;         //Distance from Ultrasonic sensor after that seen as clear
+extern int surroundObjectSpeed;     //speed for surrounding
+extern int backDistance;            //Distance to drive back after collision
+extern int minDist;                 //distance in front of ultrasonic sensors for collision (in cm)
+
+extern bool routeStop;
 
 int getUltrasonicDistance(int sensor);
 int getDrivenLengthLeft();

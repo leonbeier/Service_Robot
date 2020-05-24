@@ -18,9 +18,9 @@ bool driveRoute(int distanceLeft, int distanceRight, int speed){
 	startRoute(distanceLeft,distanceRight,speed);
 
 	//Check for collision while driving
-	while(!routeFinished())
+	while(!routeFinished() && !routeStop)
 	{
-		if(serialEvent) serialEvent();
+		serialEvent();
 
 		bool forward = distanceLeft > 0 && distanceRight > 0;
 
@@ -61,7 +61,7 @@ bool driveRoute(int distanceLeft, int distanceRight, int speed){
 
 	for (int i = 0; i < depth; i ++) Serial.print("  ");
 	Serial.println("Finished route");
-	return true;
+	return !routeStop;
 }
 
 bool surround(int distanceLeft, int distanceRight, int speed){
@@ -118,7 +118,7 @@ bool surround(int distanceLeft, int distanceRight, int speed){
 
 	startRoute(distanceLeft,distanceRight,speed);
 
-	return true;
+	return !routeStop;
 }
 
 ////Drive functions//////////////////////////////////////////////////////////////
@@ -127,9 +127,9 @@ bool driveRouteWithoutSurrounding(int distanceLeft, int distanceRight, int speed
 	startRoute(distanceLeft,distanceRight,speed);
 
 	bool success = true;
-	while(!routeFinished() && success)
+	while(!routeFinished() && success && !routeStop)
 	{
-		if(serialEvent) serialEvent();
+		serialEvent();
 
 		bool leftCollision   = getUltrasonicDistance(1) < minDist && checkDistance;
 		bool middleCollision = getUltrasonicDistance(2) < minDist && checkDistance;
@@ -139,7 +139,7 @@ bool driveRouteWithoutSurrounding(int distanceLeft, int distanceRight, int speed
 		delay(100);
 	}
 
-	return success;
+	return success && !routeStop;
 }
 
 bool driveTurn(bool driveRight){
@@ -149,7 +149,6 @@ bool driveTurn(bool driveRight){
 	else{
 		return driveRouteWithoutSurrounding(rightAngleTurnDistance*(-1), rightAngleTurnDistance, surroundObjectSpeed, false);
 	}
-	return true;
 }
 
 bool driveBack(int distanceLeft, int distanceRight, int speed, int *leftOverDistanceLeft, int *leftOverDistanceRight){
@@ -184,9 +183,9 @@ bool driveAround(int maxDistanceLeft, int maxDistanceRight, int speed, int *offs
 
 	bool checkSideEna = !waitForObject;
 
-	while(!routeFinished() && success && !stop)
+	while(!routeFinished() && success && !stop && !routeStop)
 	{
-		if(serialEvent) serialEvent();
+		serialEvent();
 
 		//Problem with motor
 		if (routeError()) success = false;
@@ -203,7 +202,7 @@ bool driveAround(int maxDistanceLeft, int maxDistanceRight, int speed, int *offs
 		else sideDistance = getUltrasonicDistance(0);
 
 		int drivenLeft  = getDrivenLengthLeft();
-		if (sideDistance > checkDistance){
+		if (sideDistance > checkDistance || sideDistance > maxSideDistance){
 			if (checkSideEna){
 				if (!sideEnoughtSpace){
 					sideStartDrivenLeft  = drivenLeft;
@@ -225,7 +224,7 @@ bool driveAround(int maxDistanceLeft, int maxDistanceRight, int speed, int *offs
 	*offsetDistanceLeft  += drivenLeft;
 	*offsetDistanceRight += drivenRight;
 
-	return stop;
+	return stop && !routeStop;
 }
 
 ////General Functions//////////////////////////////////////////////////////////////
