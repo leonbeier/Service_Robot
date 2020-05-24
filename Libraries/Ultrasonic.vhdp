@@ -53,9 +53,6 @@ Component Ultrasonic_Controller
     Dist    : OUT NATURAL range 0 to 1000 := 0; --0 to 1000 cm
 )
 {
-    CONSTANT Max_Error_Dist : NATURAL := 50;    --Only check for error with distances smaller than this
-    CONSTANT Max_Diff       : NATURAL := 20;    --Only set ditance if last distance is max. 10cm apart
-    
     SIGNAL START       : STD_LOGIC := '0';      --one cycle '1' to start Trigger
     SIGNAL CM_CLK      : STD_LOGIC := '0';      --one cycle '1' if time for one cm is over
     SIGNAL TRIGGER_BUF : STD_LOGIC := '0';
