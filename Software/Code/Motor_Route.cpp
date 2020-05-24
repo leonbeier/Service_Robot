@@ -20,6 +20,8 @@ bool driveRoute(int distanceLeft, int distanceRight, int speed){
 	//Check for collision while driving
 	while(!routeFinished())
 	{
+		if(serialEvent) serialEvent();
+
 		bool forward = distanceLeft > 0 && distanceRight > 0;
 
 		//Check ultrasonic sensors
@@ -30,6 +32,16 @@ bool driveRoute(int distanceLeft, int distanceRight, int speed){
 		//Check for collision
 		if (leftCollision || middleCollision || rightCollision || routeError())
 		{
+			for (int i = 0; i < depth; i ++) Serial.print("  ");
+			Serial.print("Collision ");
+			Serial.print(leftCollision);
+			Serial.print(" | ");
+			Serial.print(middleCollision);
+			Serial.print(" | ");
+			Serial.print(rightCollision);
+			Serial.print(" | ");
+			Serial.print(routeError());
+
 			if (forward){  //surrounding only works when driving forward
 				if (!surround(distanceLeft, distanceRight, speed)){
 					startRoute(0,0,0, false);
@@ -53,10 +65,6 @@ bool driveRoute(int distanceLeft, int distanceRight, int speed){
 }
 
 bool surround(int distanceLeft, int distanceRight, int speed){
-	for (int i = 0; i < depth; i ++) Serial.print("  ");
-	Serial.println("Collision");
-	if (routeError()) Serial.println("Motor Problem!");
-
 	//Save left over distance for both motors
 	int leftOverDistanceLeft = abs(distanceLeft)-getDrivenLengthLeft();
 	if (distanceLeft < 0) {leftOverDistanceLeft *= -1;}
@@ -121,6 +129,8 @@ bool driveRouteWithoutSurrounding(int distanceLeft, int distanceRight, int speed
 	bool success = true;
 	while(!routeFinished() && success)
 	{
+		if(serialEvent) serialEvent();
+
 		bool leftCollision   = getUltrasonicDistance(1) < minDist && checkDistance;
 		bool middleCollision = getUltrasonicDistance(2) < minDist && checkDistance;
 		bool rightCollision  = getUltrasonicDistance(3) < minDist && checkDistance;
@@ -149,8 +159,6 @@ bool driveBack(int distanceLeft, int distanceRight, int speed, int *leftOverDist
 	if (leftOverDistanceRight > 0){distanceRight *= -1;}
 
 	//Start Driving
-	startRoute(distanceLeft,distanceRight,speed);
-
 	success = driveRouteWithoutSurrounding(distanceLeft,distanceRight,speed, false);
 
 	int drivenLeft  = getDrivenLengthLeft();
@@ -178,6 +186,8 @@ bool driveAround(int maxDistanceLeft, int maxDistanceRight, int speed, int *offs
 
 	while(!routeFinished() && success && !stop)
 	{
+		if(serialEvent) serialEvent();
+
 		//Problem with motor
 		if (routeError()) success = false;
 		//Collosion

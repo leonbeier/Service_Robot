@@ -4,11 +4,11 @@
 
 static int rightAngleTurnDistance = 475;  //mm to drive for a 90° turn
 static int sideCheckMaxDistance = 10000;  //maximum distance to drive while checking if the object can be surrounded
-static int sideCheckDistance_1  = 200;    //Overshoot while driving to the side
-static int sideCheckDistance_2  = 500;    //Overshoot while driving to the side
+static int sideCheckDistance_1  = 250;    //Overshoot while driving to the side
+static int sideCheckDistance_2  = 450;    //Overshoot while driving to the side
 static int surroundObjectSpeed = 255;     //speed for surrounding
 static int backDistance = 50;
-static int minDist = 10;                   //distance in front of ultrasonic sensors for collision (in cm)
+static int minDist = 5;                   //distance in front of ultrasonic sensors for collision (in cm)
 
 int getUltrasonicDistance(int sensor);
 int getDrivenLengthLeft();

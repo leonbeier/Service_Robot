@@ -51,6 +51,7 @@ int routesR [16][64];
 int lengths [16];
 
 char received [64];
+bool routeRunning = false;
 
 int route;
 
@@ -60,7 +61,7 @@ int curRouteStep;
 bool recordRoute;
 
 void loop() {
-	Serial.println("Ready\n\n\"Read\" = Read saved routes\n\"Record\" = Record new route\n\"Route\" = Drive route\n\"Home\" = Return to home\n\"Delete\" = Delete route\n\"Turn\" = Set length to turn 90deg\n1 = 10cm Forward, 2 = Left, 3 = 10cm Backward, 4 = Right");
+	Serial.println("Ready\n\n\"Read\" = Read saved routes\n\"Record\" = Record new route\n\"Route\" = Drive route\n\"Home\" = Return to home\n\"Stop\" = Stop robot while driving\n\"Delete\" = Delete route\n\"Turn\" = Set length to turn 90deg\n1 = 10cm Forward, 2 = Left, 3 = 10cm Backward, 4 = Right");
 
 	//Receive UART Data
 
@@ -134,6 +135,7 @@ void loop() {
 		route--;
 
 		recordRoute = true;
+		routeRunning = true;
 		for (int i = 0; i < lengths[route]; i ++){
 			if (!driveRoute(routesL[route][i],routesR[route][i],255)){
 				while(!digitalRead(26)){
@@ -144,9 +146,11 @@ void loop() {
 				}
 			}
 		}
+		routeRunning = false;
 		recordRoute = false;
 	}
 	else if(!strncmp(strtolower(received), "home", strlen("home"))){ //Besser: beim Fahren aufnehmen um auch Umfahren zu tracken
+		routeRunning = true;
 		if (!driveTurn(true) || !driveTurn(true)) {
 			while(!digitalRead(26)){
 				digitalWrite(30,1);
@@ -165,6 +169,7 @@ void loop() {
 				}
 			}
 		}
+		routeRunning = false;
 	}
 	else if(!strncmp(strtolower(received), "delete", strlen("delete"))){
 		Serial.print("Select route 1-");
@@ -234,9 +239,29 @@ void loop() {
 void receive(){
 	received[0] = '\0';
 	while (Serial.available() == 0);
-	while (Serial.available() > 0){
-		sprintf(received,"%s%c",received,Serial.read());
+	char c;
+	while (Serial.available() > 0 && (c = Serial.read()) != '\n'){
+		sprintf(received,"%s%c",received,c);
 		delay(10);
+	}
+}
+
+void serialEvent() {
+	if (routeRunning && Serial.available()){
+		received[0] = '\0';
+		while (Serial.available()) {
+			sprintf(received,"%s%c",received,Serial.read());
+			delay(10);
+		}
+
+		if (!strncmp(strtolower(received), "stop", strlen("stop"))){
+			startRoute(0,0,0, false);
+			Serial.println("Stopped Robot!\n\"Release\" = Re-enabled Robot");
+			do {
+				receive();
+			} while (strncmp(strtolower(received), "release", strlen("release")));
+			Serial.println("Re-enabled Robot!");
+		}
 	}
 }
 

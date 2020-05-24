@@ -458,7 +458,7 @@
   <parameter name="SECTOR_ACCESS_MODE">Read and write,Read and write,Read and write,Read and write,Read and write</parameter>
   <parameter name="autoInitializationFileName">$${FILENAME}_onchip_flash_0</parameter>
   <parameter name="initFlashContent" value="true" />
-  <parameter name="initializationFileName">C:/Users/LeonB/OneDrive/Leon/Protop_Solutions/YouTube/Tutorials/Service_Roboter/VHDPlus/Software/Robot/mem_init/NIOSDuino_Core_onchip_flash_0.hex</parameter>
+  <parameter name="initializationFileName">C:/Users/LeonB/Documents/GitHub/Service_Robot1/Software/Robot/mem_init/NIOSDuino_Core_onchip_flash_0.hex</parameter>
   <parameter name="initializationFileNameForSim">altera_onchip_flash.dat</parameter>
   <parameter name="useNonDefaultInitFile" value="true" />
  </module>

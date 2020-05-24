@@ -81,6 +81,8 @@ class HardwareSerial : public Stream
     operator bool() { return true; }
 };
 
+extern void serialEventRun(void) __attribute__((weak));
+
 #if defined(UART_0_BASE)
   extern HardwareSerial Serial0;
   #define HAVE_HWSERIAL0

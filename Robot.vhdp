@@ -138,6 +138,7 @@ Main
         (
             CLK_Frequency    => 12000000,
             Update_Frequency => 15,
+            Oversample       => 3,
             
             Reset            => '0',
             Trigger          => Trigger_V(i),

@@ -2,6 +2,24 @@
 <ProjectRoot xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Header>Robot</Header>
   <Items xsi:type="ProjectFolder">
+    <Header>Generated</Header>
+    <Items xsi:type="ProjectFile">
+      <Header>Motor_Controller.vhd</Header>
+    </Items>
+    <Items xsi:type="ProjectFile">
+      <Header>Motor_Encoder.vhd</Header>
+    </Items>
+    <Items xsi:type="ProjectFile">
+      <Header>PWM_Generator.vhd</Header>
+    </Items>
+    <Items xsi:type="ProjectFile">
+      <Header>Robot.vhd</Header>
+    </Items>
+    <Items xsi:type="ProjectFile">
+      <Header>Ultrasonic_Controller.vhd</Header>
+    </Items>
+  </Items>
+  <Items xsi:type="ProjectFolder">
     <Header>Libraries</Header>
     <Items xsi:type="ProjectFolder">
       <Header>ISSP</Header>
