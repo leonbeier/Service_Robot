@@ -28,3 +28,29 @@ void writeInteger(int startPin, int length, int value){
 		value += (1<<length);
 	writeNatural(startPin, length, value);
 }
+
+
+/*
+//Sets the output pins to a number
+void setInt (int val, int length, int start)
+{
+    for (int i = 0; i < length; i ++){
+        digitalWrite(i+start, val%2);
+        val /= 2;
+    }
+}
+
+//Reads a number from the input pins
+int readInt (int length, int start)
+{
+    uint32_t val = IORD_ALTERA_AVALON_PIO_DATA(PIO_1_BASE);
+    return (val >> (start)) & (int)pow(2.0, (double)length);
+    
+    int result = 0;
+    for (int j = length+start-1; j >= start; j --){
+        result += digitalRead(j);
+        result *= 2;
+    }
+    return result;
+}
+*/
